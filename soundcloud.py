@@ -11,7 +11,7 @@ def get_stream_token_uid(page):
         stream_token = match.group(2)
         return (uid, stream_token)
 
-def download(uid, token)
+def download(uid, token):
     """ given url with token and uid, download file to mp3 """
 
     url = "http://media.soundcloud.com/stream/%s?stream_token=%s" % (uid, token)
