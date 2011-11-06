@@ -5,6 +5,7 @@ import urllib2
 import random
 import sys
 import re
+import time
 
 # Maximum number of download attempts
 max_retry = 3
@@ -25,7 +26,7 @@ def open_url(url):
             break
         except:
             retry += 1
-            sleep(1)
+            time.sleep(1)
     if not html:
         print "failed to fetch url"
         sys.exit()
