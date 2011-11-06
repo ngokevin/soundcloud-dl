@@ -1,5 +1,10 @@
 ## Soundcloud CLI tool
 
-A little command line tool for working with soundcloud.
+A little command line tool for working with Soundcloud.
 
-USAGE: soundcloud.py -u [URL]
+You can either pass in a direct URL to a Soundcloud song or you can pass in any
+link that may possibly contain Soundcloud URLs and the script will scrape for 
+the links and download them all at once. If you pass in both options, a page
+and a URL, it would download the URL and any URLs found within the page.
+
+USAGE: soundcloud.py -u [URL] -p [PAGE_WITH_URLs]

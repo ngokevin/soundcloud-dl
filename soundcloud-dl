@@ -3,11 +3,11 @@ from optparse import OptionParser
 import cookielib
 import urllib2
 import random
+import time
 import sys
 import re
-import time
 
-# Maximum number of download attempts
+# max number of download attempts
 max_retry = 3
 
 # set up header values and openers
@@ -17,20 +17,17 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), urllib2.HTTPHandl
 urllib2.install_opener(opener)
 
 def open_url(url):
-    print "Fetching URL html..."
+    """ fetches html from given url """
+    print "fetching html..."
     try:
-        request = urllib2.Request(options.url, headers=header_values)
+        request = urllib2.Request(url, headers=header_values)
         response = opener.open(request)
     except urllib2.HTTPError, e:
-        time.sleep(tries)
+        time.sleep(1)
     except ValueError, e:
         print str(e)
         return None
-    print "Retrieved html"
     html = response.read()
-    if not html:
-        print "failed to fetch url"
-        return None
     return html
 
 def get_stream_token_uid(page):
@@ -42,13 +39,29 @@ def get_stream_token_uid(page):
         return (uid, stream_token)
 
 def get_song_title(page):
-    alpha = "abcdefghijklmnopqrstuvwxyz"
+    """ scrapes song title from soundcloud link """
     match = re.search('(?<=\"title\":\").*?(?=\")', page)
     if match:
         return match.group(0).replace(' ','_')
     else:
+        alpha = "abcdefghijklmnopqrstuvwxyz"
         random_length = 5
         return ''.join(random.choice(alpha) for i in xrange(random_length))
+
+def get_soundcloud_links(url):
+    """ given an url , scrape and return list of soundcloud links """
+    retry = 0
+    while True:
+        if retry == max_retry:
+            return None
+
+        html = open_url(url)
+        if not html:
+            retry += 1
+            print "could not fetch html. (%s) " % (retry)
+            continue
+        break
+    return ['http://soundcloud.com' + url for url in re.findall('<h3><a href="(/.*?)">.*?</a></h3>', html)]
 
 def download(uid, token, song_title):
     """ given url with token and uid, download file to mp3 """
@@ -58,48 +71,62 @@ def download(uid, token, song_title):
     request = urllib2.Request(url, headers=header_values)
     response = opener.open(request)
 
-    f = open(song_title, 'w')
+    f = open(song_title + '.mp3', 'w')
     f.write(response.read())
 
+def main(**kwargs):
+    """ takes in an url or url to page to scrape soundcloud links """
+    
+    url = kwargs['url']
 
-if __name__ == '__main__':
+    retry = 0
+    while True:
 
-    parser = OptionParser()
-    parser.add_option("-u", "--url", help="soundcloud url to download", dest="url")
-    (options, args) = parser.parse_args()
-    if not options.url:
-        parser.error("--url option requires an argument")
+        if retry == max_retry:
+            print "failed to download song"
+            sys.exit(1)
 
-    abort = True
-    tries = 0
-    while tries < max_retry:
         # open up initial page to get stream token, uid, song title
-        html = open_url(options.url)
+        html = open_url(url)
         if not html:
-            tries += 1
-            print "Could not retrieve initial html. (%s) " % (tries)
-            continue # Try again
-        # Sometimes html isn't html, it's some flash applet (or something binary).
-        # In that case get_stream_token_uid returns None.
+            retry += 1
+            print "Could not retrieve initial html. (%s) " % (retry)
+            continue 
+        
+        # get stream token returns none if html is random binary 
         info = get_stream_token_uid(html)
         if not info:
-            tries += 1
-            print "Could not get stream token. (%s)" % (tries)
-            continue # Try again
+            retry += 1
+            print "Could not get stream token. (%s)" % (retry)
+            continue 
+
         (uid, token) = info
-
-        song_title = get_song_title(html) + '.mp3'
-        abort = False
-        break #Break out, we have all the info we need.
-
-    if abort:
-        print "Error."
-        sys.exit(1)
-
+        song_title = get_song_title(html)
+        break 
 
     # the browser does this...so we will too
     open_url('http://media.soundcloud.com/crossdomain.xml')
 
     download(uid, token, song_title)
-    print song_title+".mp3 has been downloaded."
+    print song_title + " successfully downloaded."
+
+if __name__ == '__main__':
+
+    parser = OptionParser()
+    parser.add_option("-u", "--url", help="soundcloud url to download", dest="url")
+    parser.add_option("-p", "--page", help="downloads all soundcloud urls found in given page", dest="page_url")
+    (options, args) = parser.parse_args()
+
+    urls = []
+    if options.page_url:
+        urls = get_soundcloud_links(options.page_url)
+    if options.url:
+        urls.append(options.url) 
+    if not options.url and options.page_url:
+        print "USAGE: soundcloud.py [-u URL] [-p PAGE WITH URLS]"
+
+    print "downloading: " + str(urls)
+    for url in urls:
+        main(**{'url':url})
+
 
