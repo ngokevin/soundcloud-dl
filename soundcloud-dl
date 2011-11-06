@@ -8,7 +8,7 @@ import re
 import time
 
 # Maximum number of download attempts
-max_retry = 3
+max_retry = 1
 
 # set up header values and openers
 header_values =  {'User-Agent' : 'Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16', 'Accept' : 'application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5', 'Accept-Charset' : 'ISO-8859-1,utf-8;q=0.7,*;q=0.3', 'Accept-Encoding' : 'gzip,deflate,sdch', 'Accept-Language' : 'en-US,en;q=0.8', 'Cache-Control' : 'max-age=0', 'Connection' : 'keep-alive'}
@@ -17,17 +17,20 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), urllib2.HTTPHandl
 urllib2.install_opener(opener)
 
 def open_url(url):
-    retry = 0;
-    while retry < max_retry:
+    tries = 0;
+    while tries < max_retry:
+        tries += 1
+        print "Fetching..."
         try:
             request = urllib2.Request(options.url, headers=header_values)
             response = opener.open(request)
+            break
         except urllib2.HTTPError, e:
-            retry += 1
-            time.sleep(1)
+            time.sleep(tries)
         except ValueError, e:
             print str(e)
             return None
+    print "Retrieved html"
     html = response.read()
     if not html:
         print "failed to fetch url"
@@ -47,7 +50,6 @@ def get_song_title(page):
     if match:
         return match.group(0).replace(' ','_')
     else:
-        alpha = "abcdefghijklmnopqrstuvwxyz"
         random_length = 5
         return ''.join(random.choice(alpha) for i in xrange(random_length))
 
@@ -75,7 +77,13 @@ if __name__ == '__main__':
     html = open_url(options.url)
     if not html:
         sys.exit(1)
-    (uid, token) = get_stream_token_uid(html)
+    # Sometimes html isn't html, it's some flash applet (or something binary).
+    # In that case get_stream_token_uid returns None.
+    info = get_stream_token_uid(html)
+    if not info:
+        print "Could not get stream token."
+        sys.exit(1)
+    (uid, token) = info
 
     song_title = get_song_title(html) + '.mp3'
 
@@ -83,4 +91,5 @@ if __name__ == '__main__':
     open_url('http://media.soundcloud.com/crossdomain.xml')
 
     download(uid, token, song_title)
+    print song_title+".mp3 has been downloaded."
 
