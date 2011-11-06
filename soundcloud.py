@@ -6,8 +6,9 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-u", "--url")
     (options, args) = parser.parse_args()
-    if not options.url:
+    if not options:
         print "Need to give a URL silly"
     else:
         # compose a url with uid and token and request the mpeg
-        download(options.url)
+        if options.url:
+            download(options.url)
