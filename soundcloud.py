@@ -40,12 +40,14 @@ def get_song_title(page):
 def download(uid, token, song_title='soundcloud_dl.mp3'):
     """ given url with token and uid, download file to mp3 """
 
+    # compose a url with uid and token and request the mpeg 
     url = "http://media.soundcloud.com/stream/%s?stream_token=%s" % (uid, token)
     request = urllib2.Request(url, headers=header_values)
     response = opener.open(request)
 
     f = open(song_title, 'w')
     f.write(response.read())
+
 
 if __name__ == '__main__':
 
@@ -66,9 +68,5 @@ if __name__ == '__main__':
     # the browser does this...so we will too
     open_url('http://media.soundcloud.com/crossdomain.xml')
 
-    # compose a url with uid and token and request the mpeg 
     download(uid, token, song_title)
-
-
-
 
