@@ -22,14 +22,16 @@ def open_url(url):
         try:
             request = urllib2.Request(options.url, headers=header_values)
             response = opener.open(request)
-            html = response.read()
-            break
-        except:
+        except urllib2.HTTPError, e:
             retry += 1
             time.sleep(1)
+        except ValueError, e:
+            print str(e)
+            return None
+    html = response.read()
     if not html:
         print "failed to fetch url"
-        sys.exit()
+        return None
     return html
 
 def get_stream_token_uid(page):
@@ -71,6 +73,8 @@ if __name__ == '__main__':
 
     # open up initial page to get stream token, uid, song title
     html = open_url(options.url)
+    if not html:
+        sys.exit(1)
     (uid, token) = get_stream_token_uid(html)
 
     song_title = get_song_title(html) + '.mp3'
