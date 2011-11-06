@@ -17,19 +17,15 @@ opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), urllib2.HTTPHandl
 urllib2.install_opener(opener)
 
 def open_url(url):
-    tries = 0;
-    while tries < max_retry:
-        tries += 1
-        print "Fetching..."
-        try:
-            request = urllib2.Request(options.url, headers=header_values)
-            response = opener.open(request)
-            break
-        except urllib2.HTTPError, e:
-            time.sleep(tries)
-        except ValueError, e:
-            print str(e)
-            return None
+    print "Fetching URL html..."
+    try:
+        request = urllib2.Request(options.url, headers=header_values)
+        response = opener.open(request)
+    except urllib2.HTTPError, e:
+        time.sleep(tries)
+    except ValueError, e:
+        print str(e)
+        return None
     print "Retrieved html"
     html = response.read()
     if not html:
@@ -74,21 +70,20 @@ if __name__ == '__main__':
         parser.error("--url option requires an argument")
 
     abort = True
-    error = ''
     tries = 0
     while tries < max_retry:
         # open up initial page to get stream token, uid, song title
         html = open_url(options.url)
         if not html:
             tries += 1
-            error = "Could not retrieve initial html."
+            print "Could not retrieve initial html. (%s) " % (tries)
             continue # Try again
         # Sometimes html isn't html, it's some flash applet (or something binary).
         # In that case get_stream_token_uid returns None.
         info = get_stream_token_uid(html)
         if not info:
             tries += 1
-            error = "Could not get stream token."
+            print "Could not get stream token. (%s)" % (tries)
             continue # Try again
         (uid, token) = info
 
@@ -97,7 +92,7 @@ if __name__ == '__main__':
         break #Break out, we have all the info we need.
 
     if abort:
-        print error
+        print "Error."
         sys.exit(1)
 
 
