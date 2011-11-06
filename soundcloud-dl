@@ -6,9 +6,13 @@ import urllib2
 import sys
 import re
 import time
+import random
 
-# Maximum number of download attemps
+# Maximum number of download attempts
 MAX_NUMBER_OF_TRIES = 3
+# Alphabet for random file names.
+alpha = "abcdefghijklmnopqrstuvwxyz"
+R_LEN = 5 # Length of random name
 # set up header values and openers
 header_values =  {'User-Agent' : 'Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16', 'Accept' : 'application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5', 'Accept-Charset' : 'ISO-8859-1,utf-8;q=0.7,*;q=0.3', 'Accept-Encoding' : 'gzip,deflate,sdch', 'Accept-Language' : 'en-US,en;q=0.8', 'Cache-Control' : 'max-age=0', 'Connection' : 'keep-alive'}
 cj = cookielib.MozillaCookieJar()
@@ -39,12 +43,14 @@ def get_stream_token_uid(page):
         stream_token = match.group(2)
         return (uid, stream_token)
 
-def get_song_title(page, sain_name=False):
+def get_song_title(page, sain_name=False, random_name=False):
     match = re.search('(?<=\"title\":\").*?(?=\")', page)
-    if match:
+    if match and not random_name:
         if sain_name:
             return match.group(0).replace(' ','_')
         return match.group(0)
+    else:
+        return ''.join(random.choice(alpha) for i in xrange(R_LEN))
 
 def download(uid, token, song_title='soundcloud_dl.mp3'):
     """ given url with token and uid, download file to mp3 """
@@ -62,7 +68,8 @@ if __name__ == '__main__':
 
     parser = OptionParser()
     parser.add_option("-u", "--url", help="soundcloud url to download", dest="url")
-    parser.add_option("-n", "--sain-name", action="store_true", help="soundcloud url to download", dest="sain_name", default=False)
+    parser.add_option("-n", "--sain-name", action="store_true", help="change all spaces to underscores", dest="sain_name", default=False)
+    parser.add_option("-r", "--random-name", action="store_true", help="use a random file name when writing file", dest="random_name", default=False)
     (options, args) = parser.parse_args()
     if not options.url:
         parser.error("--url option requires an argument")
@@ -84,7 +91,7 @@ if __name__ == '__main__':
             time.sleep(tries)
 
     uid, token = info
-    song_title = get_song_title(html, options.sain_name) + '.mp3'
+    song_title = get_song_title(html, options.sain_name, options.random_name) + '.mp3'
 
     # the browser does this...so we will too
     open_url('http://media.soundcloud.com/crossdomain.xml')
