@@ -8,7 +8,7 @@ import re
 import time
 
 # Maximum number of download attempts
-max_retry = 1
+max_retry = 3
 
 # set up header values and openers
 header_values =  {'User-Agent' : 'Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16', 'Accept' : 'application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5', 'Accept-Charset' : 'ISO-8859-1,utf-8;q=0.7,*;q=0.3', 'Accept-Encoding' : 'gzip,deflate,sdch', 'Accept-Language' : 'en-US,en;q=0.8', 'Cache-Control' : 'max-age=0', 'Connection' : 'keep-alive'}
@@ -73,19 +73,33 @@ if __name__ == '__main__':
     if not options.url:
         parser.error("--url option requires an argument")
 
-    # open up initial page to get stream token, uid, song title
-    html = open_url(options.url)
-    if not html:
-        sys.exit(1)
-    # Sometimes html isn't html, it's some flash applet (or something binary).
-    # In that case get_stream_token_uid returns None.
-    info = get_stream_token_uid(html)
-    if not info:
-        print "Could not get stream token."
-        sys.exit(1)
-    (uid, token) = info
+    abort = True
+    error = ''
+    tries = 0
+    while tries < max_retry:
+        # open up initial page to get stream token, uid, song title
+        html = open_url(options.url)
+        if not html:
+            tries += 1
+            error = "Could not retrieve initial html."
+            continue # Try again
+        # Sometimes html isn't html, it's some flash applet (or something binary).
+        # In that case get_stream_token_uid returns None.
+        info = get_stream_token_uid(html)
+        if not info:
+            tries += 1
+            error = "Could not get stream token."
+            continue # Try again
+        (uid, token) = info
 
-    song_title = get_song_title(html) + '.mp3'
+        song_title = get_song_title(html) + '.mp3'
+        abort = False
+        break #Break out, we have all the info we need.
+
+    if abort:
+        print error
+        sys.exit(1)
+
 
     # the browser does this...so we will too
     open_url('http://media.soundcloud.com/crossdomain.xml')
