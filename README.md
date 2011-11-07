@@ -1,5 +1,5 @@
 ## Soundcloud CLI tool
-## Authors: ngokevin, uberj, thedjpetersen (no order)
+### Authors: ngokevin, uberj, thedjpetersen (no order)
 
 A little command line tool for working with Soundcloud.
 
