@@ -1,6 +1,8 @@
 ## Soundcloud CLI tool
 ### Authors: ngokevin, uberj, thedjpetersen (no order)
 
+edit: Soundcloud has been integrated into youtube-dl
+
 A little command line tool for working with Soundcloud.
 
 You can either pass in a direct URL to a Soundcloud song or you can pass in any
