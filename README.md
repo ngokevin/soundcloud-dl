@@ -1,5 +1,5 @@
 ## Soundcloud CLI tool
-### Authors: ngokevin, uberj, thedjpetersen (no order)
+### Authors: ngokevin, uberj, thedjpetersen
 
 edit: Soundcloud has been integrated into youtube-dl
 
@@ -11,3 +11,5 @@ the links and download them all at once. If you pass in both options, a page
 and a URL, it would download the URL and any URLs found within the page.
 
 USAGE: soundcloud.py -u [URL] -p [PAGE_WITH_URLs]
+
+Also check out http://soundcloud-dl.com 
